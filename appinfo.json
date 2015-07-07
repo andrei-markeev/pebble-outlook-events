@@ -1,0 +1,42 @@
+{
+    "appKeys": {},
+    "capabilities": [
+        "configurable"
+    ],
+    "companyName": "omlin@yandex.ru",
+    "longName": "Pebble Outlook Calendar",
+    "projectType": "pebblejs",
+    "resources": {
+        "media": [
+            {
+                "file": "images/menu_icon.png",
+                "menuIcon": true,
+                "name": "IMAGE_MENU_ICON",
+                "type": "png"
+            },
+            {
+                "file": "images/logo_splash.png",
+                "name": "IMAGE_LOGO_SPLASH",
+                "type": "png"
+            },
+            {
+                "file": "images/tile_splash.png",
+                "name": "IMAGE_TILE_SPLASH",
+                "type": "png"
+            },
+            {
+                "file": "fonts/UbuntuMono-Regular.ttf",
+                "name": "MONO_FONT_14",
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "Outlook Calendar",
+    "uuid": "8d71cefa-a394-4376-a157-399bff1045e6",
+    "versionCode": 1,
+    "versionLabel": "1.0",
+    "watchapp": {
+        "watchface": false
+    }
+}
