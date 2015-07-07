@@ -1,5 +1,6 @@
 var UI = require('ui');
 var Settings = require('settings');
+var OAuth = require('oauth');
 var ajax = require('ajax');
 
 Settings.config({url: "http://markeev.com/pebble/outlookCalendar.html"});
@@ -11,8 +12,48 @@ eventsMenu.show();
 
 var infoCard = null;
 
-var clientId = Settings.option('clientId');
-var clientSecret = Settings.option('clientSecret').replace(/ /g,'+');
+OAuth.login(function(access_token)
+{
+    ajax(
+      {
+        url: 'https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime='+new Date(Date.now()).toISOString()+'&enddatetime=3015-10-11T01:00:00Z&$top=10&$select=Subject,Start,IsAllDay,End,Attendees,Organizer,BodyPreview,ResponseStatus',
+        headers: { 
+          "Authorization": "Bearer " + access_token
+        }
+      },
+      calendarDataRequestCallback,
+      ajaxErrorCallback
+    );
+  
+},
+ajaxErrorCallback);
+
+function ajaxErrorCallback(error, status, request) {
+    showText('Error', error ? JSON.parse(error).error_description : 'Unknown error occured!');
+    console.log('Ajax request failed: ' + JSON.stringify(error) + ', status: ' + status + ', request: ' + JSON.stringify(request));
+}
+
+function calendarDataRequestCallback(data, status, request) {
+  console.log('Returned calendar data: ' + data);
+  var events = JSON.parse(data).value;
+  for (var i=0;i<events.length;i++)
+  {
+    var k = i + 1;
+    Settings.data("event" + k + "Id", events[i].Id);
+    Settings.data("event" + k + "Subject", events[i].Subject);
+    Settings.data("event" + k + "Start", events[i].Start);
+    Settings.data("event" + k + "BodyPreview", events[i].BodyPreview);
+    Settings.data("event" + k + "IsAllDay", events[i].IsAllDay);
+    Settings.data("event" + k + "End", events[i].End);
+    Settings.data("event" + k + "Response", events[i].ResponseStatus.Response);
+    var attendeesList = [];
+    for (var a=0;a<events[i].Attendees.length;a++)
+      attendeesList.push(events[i].Attendees[a].EmailAddress.Name);
+    Settings.data("event" + k + "Attendees", attendeesList.join(", "));
+  }
+  showEvents("online");
+}
+
 
 function leadingZero(n)
 {
@@ -89,100 +130,3 @@ function showText(title,text)
   infoCard.show();
 }
 
-function getGuid()
-{
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
-    return v.toString(16);
-  });
-}
-
-function errorCallback(error, status, request) {
-  showText('Error', error ? JSON.parse(error).error_description : 'Unknown error occured!');
-  console.log('Ajax request failed: ' + JSON.stringify(error) + ', status: ' + status + ', request: ' + JSON.stringify(request));
-}
-
-function calendarDataRequestCallback(data, status, request) {
-  console.log('Returned calendar data: ' + data);
-  var events = JSON.parse(data).value;
-  for (var i=0;i<events.length;i++)
-  {
-    var k = i + 1;
-    Settings.data("event" + k + "Id", events[i].Id);
-    Settings.data("event" + k + "Subject", events[i].Subject);
-    Settings.data("event" + k + "Start", events[i].Start);
-    Settings.data("event" + k + "BodyPreview", events[i].BodyPreview);
-    Settings.data("event" + k + "IsAllDay", events[i].IsAllDay);
-    Settings.data("event" + k + "End", events[i].End);
-    Settings.data("event" + k + "Response", events[i].ResponseStatus.Response);
-    var attendeesList = [];
-    for (var a=0;a<events[i].Attendees.length;a++)
-      attendeesList.push(events[i].Attendees[a].EmailAddress.Name);
-    Settings.data("event" + k + "Attendees", attendeesList.join(", "));
-  }
-  showEvents("online");
-}
-
-function authCodeRequestCallback(data, status, request) {
-  console.log('Returned data:' + data);
-  var parsedData = JSON.parse(data);
-  var access_token = parsedData.access_token;
-  Settings.data('refresh_token', parsedData.refresh_token);
-  ajax(
-    {
-      url: 'https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime='+new Date(Date.now()).toISOString()+'&enddatetime=3015-10-11T01:00:00Z&$top=10&$select=Subject,Start,IsAllDay,End,Attendees,Organizer,BodyPreview,ResponseStatus',
-      headers: { 
-        "Authorization": "Bearer " + access_token,
-        "User-Agent": "PebbleOutlookCalendar/1.0",
-        "client-request-id": getGuid()
-      }
-    },
-    calendarDataRequestCallback,
-    errorCallback
-  );
-}
-
-function tryRefreshToken()
-{
-  ajax(
-    {
-      url: 'https://login.microsoftonline.com/common/oauth2/token?api-version=1.0',
-      method: 'POST',
-      data: {
-        grant_type: 'refresh_token',
-        refresh_token: Settings.data('refresh_token'),
-        redirect_uri: 'http://markeev.com/pebble/outlookCalendar.html',
-        client_id: clientId,
-        client_secret: clientSecret
-      }
-    },
-    authCodeRequestCallback,
-    errorCallback
-  );
-    
-}
-
-function performAuthRequest(code)
-{
-  console.log('code:' + code);
-  console.log('clientId:' + clientId);
-  console.log('clientSecret:' + clientSecret);
-  ajax({
-        url: 'https://login.microsoftonline.com/common/oauth2/token?api-version=1.0',
-        method: 'POST',
-        data: {
-          grant_type: 'authorization_code',
-          code: code,
-          redirect_uri: 'http://markeev.com/pebble/outlookCalendar.html',
-          client_id: clientId,
-          client_secret: clientSecret
-        }
-    },
-    authCodeRequestCallback,
-    tryRefreshToken
-  );
-    
-}
-
-
-performAuthRequest(Settings.option('code'));
