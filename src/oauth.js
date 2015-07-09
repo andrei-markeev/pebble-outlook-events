@@ -5,8 +5,8 @@ var oauth = {};
 oauth.login = function(successCallback, errorCallback)
 {
 
-  var code = Settings.option('code');
-  var clientId = Settings.option('clientId');
+  var code = Settings.option('code') || "";
+  var clientId = Settings.option('clientId') || "";
   var clientSecret = (Settings.option('clientSecret') || "").replace(/ /g,'+');
   
   function authCodeRequestCallback(data, status, request) {
@@ -25,7 +25,7 @@ oauth.login = function(successCallback, errorCallback)
         method: 'POST',
         data: {
           grant_type: 'refresh_token',
-          refresh_token: Settings.data('refresh_token'),
+          refresh_token: Settings.data('refresh_token') || "",
           redirect_uri: 'http://markeev.com/pebble/outlookCalendar.html',
           client_id: clientId,
           client_secret: clientSecret
