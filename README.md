@@ -1,16 +1,13 @@
 # Pebble Outlook Calendar
 
-This is an app for Pebble smartwatch, created with Pebble.js.
+This is an app for Pebble smartwatch, created with Pebble.js. It doesn't require a companion app.
 
-It retrieves Outlook events using Office365 APIs, caches them and displays them as a list, which you can then browse and see details of each event.
+It retrieves Outlook events using Office365 APIs, caches them and displays them as a list, which you can then browse and see details of each event. Events can also be browsed offline (i.e. when your phone is not connected to internet).
 
 ![A screenshot](https://raw.githubusercontent.com/andrei-markeev/pebble-outlook-calendar/master/screenshot.png)
+![A screenshot](https://raw.githubusercontent.com/andrei-markeev/pebble-outlook-calendar/master/screenshot2.png)
 
-Every time when you enter the app, it tries to update the list. Even if update is not successful, for example you don't have internet connection, you will still be able to browse the cached list of events offline.
+Additionally, if you're late to a meeting, you can reply with "I'm being late" message by pressing select button. In this case you can select approximate delay and send the message:
 
-## TODO
-
- - add ability to respond to upcoming events e.g. "Hi, I'm a bit late, but I'm on my way. See you soon!".
- - when responding in such way, it should be possible to define approximate minutes late, e.g. 5/10/15/20 minutes late, etc.
- - you should be able to choose responding either to organizer only or to all attendees
- - probably need to gradually move to C API since PebbleJs doesn't run separately from the phone
+![A screenshot](https://raw.githubusercontent.com/andrei-markeev/pebble-outlook-calendar/master/screenshot3.png)
+![A screenshot](https://raw.githubusercontent.com/andrei-markeev/pebble-outlook-calendar/master/screenshot4.png)
