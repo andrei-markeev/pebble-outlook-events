@@ -120,7 +120,14 @@ var appUI = function(replyCallback) {
     
     if (eventDetailsWindow)
       eventDetailsWindow.hide();
-    eventDetailsWindow = new UI.Window({ backgroundColor: 'white', scrollable: true });
+    eventDetailsWindow = new UI.Window({
+      backgroundColor: 'white',
+      scrollable: true,
+      action: {
+        select: 'images/reply.png',
+        backgroundColor: 'white'
+      }
+    });
   
     var yPos = 0;
     var titleSize = sizeVector(title, 18);
