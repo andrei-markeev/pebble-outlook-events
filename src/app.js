@@ -46,8 +46,8 @@ ajaxErrorCallback);
 
 function replyCallback(eventNo, minutes)
 {
-  var signature = Settings.option('signature') || "";
-  var message = "Hi,\nI'll be approximately " + minutes + " minutes late. See you soon!\n\n" + signature;
+  var defaultMessage = "Hi,\nI'll be approximately {n} minutes late. See you soon!";
+  var message = (Settings.option('message') || defaultMessage).replace('{n}', minutes).replace(/\\\\n/g, '\n');
   var attendeeNames = Settings.data("event" + eventNo + "Attendees").split(', ');
   var attendeeEmails = Settings.data("event" + eventNo + "AttendeeEmails").split(';');
   var recipients = [];
@@ -55,7 +55,7 @@ function replyCallback(eventNo, minutes)
     recipients.push({ EmailAddress: { Address: attendeeEmails[i], Name: attendeeNames[i] }});
   
   connector.sendMail(
-    "RE: " + Settings.data("event" + eventNo + "Subject"),
+    Settings.data("event" + eventNo + "Subject"),
     message,
     recipients,
     function(data, status, response) {

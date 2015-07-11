@@ -4,13 +4,12 @@
         "configurable"
     ],
     "companyName": "omlin@yandex.ru",
-    "longName": "Pebble Outlook Calendar",
+    "longName": "Pebble Outlook Events",
     "projectType": "pebblejs",
     "resources": {
         "media": [
             {
                 "file": "images/menu_icon.png",
-                "menuIcon": true,
                 "name": "IMAGE_MENU_ICON",
                 "type": "png"
             },
@@ -30,6 +29,12 @@
                 "type": "font"
             },
             {
+                "file": "images/logo_pebble.png",
+                "menuIcon": true,
+                "name": "IMAGES_LOGO_PEBBLE_PNG",
+                "type": "png"
+            },
+            {
                 "file": "images/reply.png",
                 "name": "IMAGES_REPLY_PNG",
                 "type": "png"
@@ -37,10 +42,10 @@
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Outlook Calendar",
+    "shortName": "Outlook Events",
     "uuid": "8d71cefa-a394-4376-a157-399bff1045e6",
     "versionCode": 1,
-    "versionLabel": "1.0",
+    "versionLabel": "1.1",
     "watchapp": {
         "watchface": false
     }
