@@ -6,8 +6,15 @@ var AppUI = require('appui');
 
 Settings.config({ url: "http://markeev.com/pebble/outlookCalendar.html" });
 
-var connector;
 var appUi = new AppUI(replyCallback);
+
+if (!Settings.option('clientId'))
+{
+  appUi.showText('Outlook Events','Please visit the app settings page on your phone and reopen the watch app after that.');
+  return;
+}
+
+var connector;
 appUi.showEventsMenu("offline");
 
 OAuth.login(function(access_token)
@@ -47,7 +54,7 @@ ajaxErrorCallback);
 function replyCallback(eventNo, minutes)
 {
   var defaultMessage = "Hi,\nI'll be approximately {n} minutes late. See you soon!";
-  var message = (Settings.option('message') || defaultMessage).replace('{n}', minutes).replace(/\\\\n/g, '\n');
+  var message = (Settings.option('message') || defaultMessage).replace('{n}', minutes).replace(/\\n/g, '\n');
   var attendeeNames = Settings.data("event" + eventNo + "Attendees").split(', ');
   var attendeeEmails = Settings.data("event" + eventNo + "AttendeeEmails").split(';');
   var recipients = [];
