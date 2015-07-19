@@ -1,0 +1,9 @@
+#include <pebble.h>
+
+enum {
+    PERSIST_EVENT_TITLE = 0,
+    PERSIST_EVENT_START_DATE = 1,
+    PERSIST_EVENT_END_DATE = 2,
+    PERSIST_EVENT_LOCATION = 3
+};
+#define PERSIST_EVENT_FIELDCOUNT 10

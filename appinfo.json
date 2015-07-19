@@ -1,51 +1,49 @@
 {
-    "appKeys": {},
+    "appKeys": {
+        "buffer_size": 4,
+        "client_secret": 1,
+        "event_end_date": 13,
+        "event_id": 10,
+        "event_location": 14,
+        "event_start_date": 12,
+        "event_title": 11,
+        "init": 0,
+        "minutes_late": 6,
+        "refresh_token": 2,
+        "refresh_ui": 7,
+        "reply_sent": 9,
+        "send_reply": 5,
+        "show_loading": 8
+    },
     "capabilities": [
         "configurable"
     ],
-    "companyName": "omlin@yandex.ru",
-    "longName": "Pebble Outlook Events",
-    "projectType": "pebblejs",
+    "companyName": "Andrei Markeev",
+    "longName": "Events 365",
+    "projectType": "native",
     "resources": {
         "media": [
             {
-                "file": "images/menu_icon.png",
-                "name": "IMAGE_MENU_ICON",
+                "file": "images/location.png",
+                "name": "IMAGE_LOCATION",
                 "type": "png"
             },
             {
-                "file": "images/logo_splash.png",
-                "name": "IMAGE_LOGO_SPLASH",
-                "type": "png"
-            },
-            {
-                "file": "images/tile_splash.png",
-                "name": "IMAGE_TILE_SPLASH",
-                "type": "png"
-            },
-            {
-                "file": "fonts/UbuntuMono-Regular.ttf",
-                "name": "MONO_FONT_14",
-                "type": "font"
-            },
-            {
-                "file": "images/logo_pebble.png",
+                "file": "images/logo28.png",
                 "menuIcon": true,
-                "name": "IMAGES_LOGO_PEBBLE_PNG",
-                "type": "png"
-            },
-            {
-                "file": "images/reply.png",
-                "name": "IMAGES_REPLY_PNG",
+                "name": "IMAGE_LOGO",
                 "type": "png"
             }
         ]
     },
     "sdkVersion": "3",
-    "shortName": "Outlook Events",
+    "shortName": "Events 365",
+    "targetPlatforms": [
+        "aplite",
+        "basalt"
+    ],
     "uuid": "8d71cefa-a394-4376-a157-399bff1045e6",
-    "versionCode": 1,
-    "versionLabel": "1.1",
+    "versionLabel": "2.0",
     "watchapp": {
         "watchface": false
     }

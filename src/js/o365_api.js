@@ -1,5 +1,4 @@
-var ajax = require('ajax');
-var office365api = function(access_token) {
+var o365_api = function(access_token) {
 
   this.getNextTenEvents = function(successCallback, errorCallback)
   {
@@ -51,5 +50,3 @@ var office365api = function(access_token) {
   };
   
 };
-
-module.exports = office365api;
