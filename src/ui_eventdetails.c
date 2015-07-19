@@ -115,6 +115,11 @@ static void window_appear(Window *window) {
         layer_set_hidden(text_layer_get_layer(s_location_layer), true);
     }
     
+    
+    Layer *window_layer = window_get_root_layer(window);
+    GRect bounds = layer_get_bounds(window_layer);
+    scroll_layer_set_content_size(s_scroll_layer, GSize(bounds.size.w, offset_y));
+    
 }
 
 static void window_unload(Window *window) {

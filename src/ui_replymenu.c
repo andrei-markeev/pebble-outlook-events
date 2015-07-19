@@ -12,7 +12,7 @@ static SimpleMenuItem replymenu_items[5];
 void process_replymenu_message(DictionaryIterator *received) {
     Tuple *tuple = dict_find(received, KEY_REPLY_SENT);
     if(tuple) {
-        ui_messagebox_show(tuple->value->cstring);
+        ui_messagebox_show("Reply sent", tuple->value->cstring);
     } 
 }
 
