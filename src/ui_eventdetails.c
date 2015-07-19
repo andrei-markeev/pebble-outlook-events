@@ -34,12 +34,25 @@ static void adjust_locationicon(int y) {
     layer_set_frame(bitmap_layer_get_layer(s_locationicon_layer), frame);
 }
 
+void select_button_clicked(ClickRecognizerRef recognizer, void *context) {
+    ui_replymenu_show(current_event_no);
+}
+
+void click_config_provider(void *context) {
+    window_single_click_subscribe(BUTTON_ID_SELECT, select_button_clicked);
+}
+
+
 static void window_load(Window *window) {
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
     
     s_scroll_layer = scroll_layer_create(bounds);
     layer_add_child(window_layer, scroll_layer_get_layer(s_scroll_layer));
+    scroll_layer_set_click_config_onto_window(s_scroll_layer, window);
+    scroll_layer_set_callbacks(s_scroll_layer, (ScrollLayerCallbacks){
+        .click_config_provider = click_config_provider
+    });
     
     s_title_layer = text_layer_create(GRect(3, 0, bounds.size.w - 6, 10));
     text_layer_set_font(s_title_layer, fonts_get_system_font(EVENT_TITLE_FONT_KEY));
@@ -135,14 +148,6 @@ void ui_eventdetails_show(int event_no) {
     window_stack_push(s_details_window, true);
 }
 
-void select_button_clicked(ClickRecognizerRef recognizer, void *context) {
-    ui_replymenu_show(current_event_no);
-}
-
-void click_config_provider(void *context) {
-    window_single_click_subscribe(BUTTON_ID_SELECT, select_button_clicked);
-}
-
 void ui_eventdetails_init() {
     s_details_window = window_create();
     window_set_window_handlers(s_details_window, (WindowHandlers){
@@ -150,7 +155,6 @@ void ui_eventdetails_init() {
         .appear = window_appear,
         .unload = window_unload,
     });
-    window_set_click_config_provider(s_details_window, click_config_provider);
 }
 
 void ui_eventdetails_deinit() {

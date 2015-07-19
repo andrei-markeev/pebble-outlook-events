@@ -14,6 +14,7 @@ static void window_load(Window *window) {
     
     s_scroll_layer = scroll_layer_create(bounds);
     layer_add_child(window_layer, scroll_layer_get_layer(s_scroll_layer));
+    scroll_layer_set_click_config_onto_window(s_scroll_layer, window);
 
     s_title_layer = text_layer_create(GRect(3, 0, bounds.size.w - 6, 32));
     text_layer_set_font(s_title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
@@ -32,6 +33,8 @@ static void window_appear(Window *window) {
     size.h += 4;
     layer_set_frame(text_layer_get_layer(s_message_layer), GRect(frame.origin.x, frame.origin.y, frame.size.w, size.h));
     text_layer_set_text(s_message_layer, message_text);
+
+    text_layer_set_text(s_title_layer, title_text);
     
     scroll_layer_set_content_size(s_scroll_layer, GSize(frame.size.w, size.h + frame.origin.y));
 }
