@@ -149,7 +149,6 @@ function getDataSize(n, size)
 }
 
 function sendAppMessageSafely(data, successCallback, errorCallback) {
-    console.log('sendAppMessageSafely ENTER');
     var bufferSize = localStorage.getItem('bufferSize');
     
     var keysCount = 0;
@@ -173,7 +172,6 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
         keysCount++;
         
         dataSize = getDataSize(keysCount, totalLength);
-        console.log(k + ': ' + dataSize + 'B, ' + keysCount + ' keys,' + totalLength + ' length');
         if (bufferSize < dataSize) {
             
             if (keysCount === 1) {
@@ -184,8 +182,6 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
                 toSend[k] = valueToSend;
                 data[k] = null;
             }
-            console.log('Sending: ' + Object.keys(toSend).join(', '));
-            //console.log('Sending: ' + JSON.stringify(toSend));
             Pebble.sendAppMessage(toSend, sendRecursively(data), errorCallback);
             return;
             
@@ -197,7 +193,6 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
         }
     }
     
-    console.log('Sending ' + dataSize + 'B: ' + Object.keys(toSend).join(', '));
     Pebble.sendAppMessage(toSend, successCallback, errorCallback);
     
 }

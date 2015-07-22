@@ -58,8 +58,6 @@ o365_oauth.login = function(successCallback, errorCallback)
       
   }
   
-  console.log('refresh_token: ' + localStorage.getItem('refresh_token'));
-    
   if (localStorage.getItem('refresh_token') !== null)
     tryRefreshToken();
   else
