@@ -9,7 +9,7 @@ Pebble.addEventListener("ready", function(e) {
 
 Pebble.addEventListener("showConfiguration", function(e) {
     console.log("Configuration opened");
-    Pebble.openURL('http://markeev.com/pebble/outlookCalendar.html');
+    Pebble.openURL('http://markeev.com/pebble/events365.html');
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
@@ -62,11 +62,15 @@ function getEvents()
 
                 var attendeesList = [];
                 var attendeesEmailList = [];
+                var n = 0;
                 for (var a=0;a<events[i].Attendees.length;a++)
                 {
                     if (events[i].Attendees[a].Type=='Resource')
                         continue;
-                    attendeesList.push(events[i].Attendees[a].EmailAddress.Name);
+                    if (a <= 2 || events[i].Attendees.length == 4)
+                        attendeesList.push(events[i].Attendees[a].EmailAddress.Name);
+                    else
+                        n++;
                     attendeesEmailList.push(events[i].Attendees[a].EmailAddress.Address);
                 }
                 sendAppMessageSafely({
@@ -76,7 +80,7 @@ function getEvents()
                     event_end_date: parseInt(new Date(events[i].End).getTime()/1000),
                     event_location: events[i].Location.DisplayName,
                     event_body: events[i].BodyPreview,
-                    event_attendees: attendeesList.join(", ")
+                    event_attendees: attendeesList.join(", ") + (n > 0 ? ", and " + n + " others." : "")
                 }, function() {
                     console.log("Event " + i + " saved to the phone.");
                     i++;

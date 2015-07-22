@@ -13,6 +13,8 @@ static BitmapLayer *s_locationicon_layer = NULL;
 static GBitmap *s_locationicon_bitmap;
 static TextLayer *s_attendees_layer = NULL;
 static TextLayer *s_body_layer = NULL;
+static BitmapLayer *s_replyicon_layer = NULL;
+static GBitmap *s_replyicon_bitmap;
 static int current_event_no = -1;
 static char event_title[PERSIST_STRING_MAX_LENGTH] = "";
 static char event_location[PERSIST_STRING_MAX_LENGTH] = "";
@@ -70,7 +72,7 @@ static void window_load(Window *window) {
     text_layer_set_overflow_mode(s_date_layer, GTextOverflowModeWordWrap);
     scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_date_layer));
     
-    s_location_layer = text_layer_create(GRect(26, 0, bounds.size.w - 29, 10));
+    s_location_layer = text_layer_create(GRect(26, 0, bounds.size.w - 42, 10));
     text_layer_set_font(s_location_layer, fonts_get_system_font(EVENT_LOCATION_FONT_KEY));
     text_layer_set_overflow_mode(s_location_layer, GTextOverflowModeWordWrap);
     scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_location_layer));
@@ -81,15 +83,21 @@ static void window_load(Window *window) {
     bitmap_layer_set_bitmap(s_locationicon_layer, s_locationicon_bitmap);
     scroll_layer_add_child(s_scroll_layer, bitmap_layer_get_layer(s_locationicon_layer));
 
-    s_attendees_layer = text_layer_create(GRect(5, 0, bounds.size.w - 8, 10));
+    s_attendees_layer = text_layer_create(GRect(5, 0, bounds.size.w - 16, 10));
     text_layer_set_font(s_attendees_layer, fonts_get_system_font(EVENT_ATTENDEES_FONT_KEY));
     text_layer_set_overflow_mode(s_attendees_layer, GTextOverflowModeWordWrap);
     scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_attendees_layer));
 
-    s_body_layer = text_layer_create(GRect(5, 0, bounds.size.w - 8, 10));
+    s_body_layer = text_layer_create(GRect(5, 0, bounds.size.w - 16, 10));
     text_layer_set_font(s_body_layer, fonts_get_system_font(EVENT_BODY_FONT_KEY));
     text_layer_set_overflow_mode(s_body_layer, GTextOverflowModeWordWrap);
     scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_body_layer));
+
+    s_replyicon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_REPLY);
+    
+    s_replyicon_layer = bitmap_layer_create(GRect(bounds.size.w - 15, bounds.size.h / 2 - 17, 15, 34));
+    bitmap_layer_set_bitmap(s_replyicon_layer, s_replyicon_bitmap);
+    layer_add_child(window_layer, bitmap_layer_get_layer(s_replyicon_layer));
 
 }
 
@@ -142,7 +150,7 @@ static void window_appear(Window *window) {
     
     if (strlen(event_location) > 0) {
         offset_y += 2;
-        adjust_locationicon(offset_y);
+        adjust_locationicon(offset_y + 2);
         adjust_text_layer_rect(event_location, EVENT_LOCATION_FONT_KEY, s_location_layer, &offset_y);
         layer_set_hidden(bitmap_layer_get_layer(s_locationicon_layer), false);
         layer_set_hidden(text_layer_get_layer(s_location_layer), false);
@@ -152,6 +160,7 @@ static void window_appear(Window *window) {
     }
     
     if (strlen(event_attendees) > 0) {
+        offset_y += 2;
         adjust_text_layer_rect(event_attendees, EVENT_ATTENDEES_FONT_KEY, s_attendees_layer, &offset_y);
         layer_set_hidden(text_layer_get_layer(s_attendees_layer), false);
     } else {
@@ -179,6 +188,8 @@ static void window_unload(Window *window) {
     text_layer_destroy(s_body_layer);
     gbitmap_destroy(s_locationicon_bitmap);
     bitmap_layer_destroy(s_locationicon_layer);
+    gbitmap_destroy(s_replyicon_bitmap);
+    bitmap_layer_destroy(s_replyicon_layer);
 }
 
 void ui_eventdetails_show(int event_no) {

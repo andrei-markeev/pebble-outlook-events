@@ -27,6 +27,11 @@
     "resources": {
         "media": [
             {
+                "file": "images/reply.png",
+                "name": "IMAGE_REPLY",
+                "type": "png"
+            },
+            {
                 "file": "images/location.png",
                 "name": "IMAGE_LOCATION",
                 "type": "png"
