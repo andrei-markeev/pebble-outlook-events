@@ -73,11 +73,16 @@ function getEvents()
                         n++;
                     attendeesEmailList.push(events[i].Attendees[a].EmailAddress.Address);
                 }
+                
+                var timeZoneOffset = new Date().getTimezoneOffset() * 60;
+                if (getWatchInfo().platform == "basalt")
+                    timeZoneOffset = 0;
+                
                 sendAppMessageSafely({
                     event_id: i,
                     event_title: events[i].Subject,
-                    event_start_date: parseInt(new Date(events[i].Start).getTime()/1000),
-                    event_end_date: parseInt(new Date(events[i].End).getTime()/1000),
+                    event_start_date: parseInt(new Date(events[i].Start).getTime()/1000) - timeZoneOffset,
+                    event_end_date: parseInt(new Date(events[i].End).getTime()/1000) - timeZoneOffset,
                     event_location: events[i].Location.DisplayName,
                     event_body: events[i].BodyPreview,
                     event_attendees: attendeesList.join(", ") + (n > 0 ? ", and " + n + " others." : "")
@@ -201,3 +206,19 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
     
 }
 
+function getWatchInfo()
+{
+    if(Pebble.getActiveWatchInfo) {
+      try {
+        return Pebble.getActiveWatchInfo();
+      } catch(err) {
+        return {
+          platform: "basalt",
+        };
+      }
+    } else {
+      return {
+        platform: "aplite",
+      };
+    }
+}
