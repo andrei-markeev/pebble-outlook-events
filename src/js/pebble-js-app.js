@@ -19,7 +19,7 @@ Pebble.addEventListener("webviewclosed", function(e) {
     localStorage.setItem('code', settings.code);
     localStorage.setItem('message', settings.message);
     localStorage.removeItem('refresh_token');
-    Pebble.sendAppMessage({show_loading: 1});
+    sendAppMessageSafely({show_loading: 1});
     getEvents();
 
 });
@@ -51,13 +51,12 @@ function getEvents()
         connector.getNextTenEvents(function(events) {
 
             function saveEvents(i) {
-
                 if (!i)
                     i = 0;
                 if (i == events.length)
                 {
-                    Pebble.sendAppMessage({refresh_ui: 1});
                     console.log("All events are saved to the phone. Sending the Refresh UI message...");
+                    sendAppMessageSafely({refresh_ui: 1});
                     return;
                 }
 
@@ -70,32 +69,31 @@ function getEvents()
                     attendeesList.push(events[i].Attendees[a].EmailAddress.Name);
                     attendeesEmailList.push(events[i].Attendees[a].EmailAddress.Address);
                 }
-
-                Pebble.sendAppMessage({
+                sendAppMessageSafely({
                     event_id: i,
                     event_title: events[i].Subject,
                     event_start_date: parseInt(new Date(events[i].Start).getTime()/1000),
                     event_end_date: parseInt(new Date(events[i].End).getTime()/1000),
-                    event_location: events[i].Location.DisplayName
+                    event_location: events[i].Location.DisplayName,
+                    event_body: events[i].BodyPreview,
+                    event_attendees: attendeesList.join(", ")
                 }, function() {
                     console.log("Event " + i + " saved to the phone.");
                     i++;
                     saveEvents(i);
-                }, errorCallback);
+                }, silentErrorCallback);
 
                 localStorage.setItem("event" + i + "Subject", events[i].Subject);
                 localStorage.setItem("event" + i + "Attendees", attendeesList.join(", "));
                 localStorage.setItem("event" + i + "AttendeeEmails", attendeesEmailList.join(";"));
-                localStorage.setItem("event" + i + "BodyPreview", events[i].BodyPreview);
-                localStorage.setItem("event" + i + "Response", events[i].ResponseStatus.Response);
                     
             }
 
             saveEvents(0);
 
-        }, errorCallback);
+        }, silentErrorCallback);
 
-    }, errorCallback);
+    }, silentErrorCallback);
 
 }
 
@@ -115,37 +113,34 @@ function sendReply(eventNo, minutes)
         recipients,
         function(data, status, response) {
             console.log('reply sent: ' + data);
-            Pebble.sendAppMessage({ reply_sent: message });
+            sendAppMessageSafely({ reply_sent: message });
         },
-        errorCallback
+        loudErrorCallback
     );
 }
 
-
-function sendBuffered(key, value, successCallback, errorCallback)
+function silentErrorCallback(err)
 {
-    var bufferSize = localStorage.getItem('bufferSize');
-    var dataSize = getDataSize(1, value.length);
-    var data = {};
-    if (dataSize < bufferSize)
-    {
-        console.log('sendBuffered END: ' + value);
-        data[key] = value;
-        Pebble.sendAppMessage(data, successCallback, errorCallback);
-        return;
-    }
+    console.log('error occured: ' + JSON.stringify(err));
+}
 
-    var metadataSize = dataSize - value.length;
-    var maxLength = bufferSize - metadataSize;
-    var valueToSend = value.substr(0, maxLength);
-    var restOfValue = value.substr(maxLength);
-    data[key] = valueToSend;
-
-    console.log('sendBuffered: ' + valueToSend);
-
-    Pebble.sendAppMessage(data, function() {
-        sendBuffered(key, restOfValue, successCallback, errorCallback);
-    }, errorCallback);
+function loudErrorCallback(error)
+{
+    console.log('error occured: ' + JSON.stringify(error));
+    if (error && typeof error == 'string')
+      error = JSON.parse(error);
+    var message = "";
+    if (error && error.error_description)
+      message = error.error_description;
+    else if (error && error.error && error.error.message)
+      message = error.error.message;
+    else if (error)
+      message = JSON.stringify(error);
+    else
+      message = 'Unknown error occured!';
+    
+    sendAppMessageSafely({show_error: message });
+    
 }
 
 function getDataSize(n, size)
@@ -153,7 +148,57 @@ function getDataSize(n, size)
     return 1 + (n * 7) + size;
 }
 
-function errorCallback(err)
-{
-    console.log('error occured: ' + JSON.stringify(err));
+function sendAppMessageSafely(data, successCallback, errorCallback) {
+    console.log('sendAppMessageSafely ENTER');
+    var bufferSize = localStorage.getItem('bufferSize');
+    
+    var keysCount = 0;
+    var totalLength = 0;
+    var dataSize = 0;
+    var toSend = {};
+    var sendRecursively = function (dataToSend)
+    {
+        return function() { sendAppMessageSafely(dataToSend, successCallback, errorCallback); };
+    };
+    for (var k in data) {
+
+        if (data[k] === null)
+            continue;
+        
+        if (typeof data[k] == "string")
+            totalLength += data[k].length;
+        else
+            totalLength += 4;
+        
+        keysCount++;
+        
+        dataSize = getDataSize(keysCount, totalLength);
+        console.log(k + ': ' + dataSize + 'B, ' + keysCount + ' keys,' + totalLength + ' length');
+        if (bufferSize < dataSize) {
+            
+            if (keysCount === 1) {
+                var metadataSize = dataSize - data[k].length;
+                var maxLength = bufferSize - metadataSize;
+                var valueToSend = data[k].substr(0, maxLength - 4) + '...';
+                
+                toSend[k] = valueToSend;
+                data[k] = null;
+            }
+            console.log('Sending: ' + Object.keys(toSend).join(', '));
+            //console.log('Sending: ' + JSON.stringify(toSend));
+            Pebble.sendAppMessage(toSend, sendRecursively(data), errorCallback);
+            return;
+            
+        } else {
+
+            toSend[k] = data[k];
+            data[k] = null;
+            
+        }
+    }
+    
+    console.log('Sending ' + dataSize + 'B: ' + Object.keys(toSend).join(', '));
+    Pebble.sendAppMessage(toSend, successCallback, errorCallback);
+    
 }
+

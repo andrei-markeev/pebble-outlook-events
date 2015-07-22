@@ -11,13 +11,19 @@ static TextLayer *s_date_layer = NULL;
 static TextLayer *s_location_layer = NULL;
 static BitmapLayer *s_locationicon_layer = NULL;
 static GBitmap *s_locationicon_bitmap;
+static TextLayer *s_attendees_layer = NULL;
+static TextLayer *s_body_layer = NULL;
 static int current_event_no = -1;
 static char event_title[PERSIST_STRING_MAX_LENGTH] = "";
 static char event_location[PERSIST_STRING_MAX_LENGTH] = "";
+static char event_attendees[PERSIST_STRING_MAX_LENGTH] = "";
+static char event_body[PERSIST_STRING_MAX_LENGTH] = "";
 static char date_string[50];
 #define EVENT_TITLE_FONT_KEY FONT_KEY_GOTHIC_24_BOLD
 #define EVENT_DATE_FONT_KEY FONT_KEY_GOTHIC_14
 #define EVENT_LOCATION_FONT_KEY FONT_KEY_GOTHIC_24
+#define EVENT_ATTENDEES_FONT_KEY FONT_KEY_GOTHIC_18
+#define EVENT_BODY_FONT_KEY FONT_KEY_GOTHIC_24
 
 static void adjust_text_layer_rect(char *text, const char *font_key, TextLayer *text_layer, int *offset_y) {
     GRect frame = layer_get_frame(text_layer_get_layer(text_layer));
@@ -74,6 +80,17 @@ static void window_load(Window *window) {
     s_locationicon_layer = bitmap_layer_create(GRect(0, 0, 21, 21));
     bitmap_layer_set_bitmap(s_locationicon_layer, s_locationicon_bitmap);
     scroll_layer_add_child(s_scroll_layer, bitmap_layer_get_layer(s_locationicon_layer));
+
+    s_attendees_layer = text_layer_create(GRect(5, 0, bounds.size.w - 8, 10));
+    text_layer_set_font(s_attendees_layer, fonts_get_system_font(EVENT_ATTENDEES_FONT_KEY));
+    text_layer_set_overflow_mode(s_attendees_layer, GTextOverflowModeWordWrap);
+    scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_attendees_layer));
+
+    s_body_layer = text_layer_create(GRect(5, 0, bounds.size.w - 8, 10));
+    text_layer_set_font(s_body_layer, fonts_get_system_font(EVENT_BODY_FONT_KEY));
+    text_layer_set_overflow_mode(s_body_layer, GTextOverflowModeWordWrap);
+    scroll_layer_add_child(s_scroll_layer, text_layer_get_layer(s_body_layer));
+
 }
 
 static void window_appear(Window *window) {
@@ -83,6 +100,8 @@ static void window_appear(Window *window) {
     
     event_title[0] = '\0';
     event_location[0] = '\0';
+    event_attendees[0] = '\0';
+    event_body[0] = '\0';
     char end_time_string[10];
     int start_date = 0;
     int end_date = 0;
@@ -90,6 +109,10 @@ static void window_appear(Window *window) {
         persist_read_string(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_TITLE, event_title, PERSIST_STRING_MAX_LENGTH);
     if (persist_exists(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_LOCATION))
         persist_read_string(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_LOCATION, event_location, PERSIST_STRING_MAX_LENGTH);
+    if (persist_exists(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_ATTENDEES))
+        persist_read_string(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_ATTENDEES, event_attendees, PERSIST_STRING_MAX_LENGTH);
+    if (persist_exists(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_BODY))
+        persist_read_string(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_BODY, event_body, PERSIST_STRING_MAX_LENGTH);
     if (persist_exists(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_START_DATE))
         start_date = persist_read_int(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_START_DATE);
     if (persist_exists(current_event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_END_DATE))
@@ -128,6 +151,19 @@ static void window_appear(Window *window) {
         layer_set_hidden(text_layer_get_layer(s_location_layer), true);
     }
     
+    if (strlen(event_attendees) > 0) {
+        adjust_text_layer_rect(event_attendees, EVENT_ATTENDEES_FONT_KEY, s_attendees_layer, &offset_y);
+        layer_set_hidden(text_layer_get_layer(s_attendees_layer), false);
+    } else {
+        layer_set_hidden(text_layer_get_layer(s_attendees_layer), true);
+    }
+
+    if (strlen(event_body) > 0) {
+        adjust_text_layer_rect(event_body, EVENT_BODY_FONT_KEY, s_body_layer, &offset_y);
+        layer_set_hidden(text_layer_get_layer(s_body_layer), false);
+    } else {
+        layer_set_hidden(text_layer_get_layer(s_body_layer), true);
+    }
     
     Layer *window_layer = window_get_root_layer(window);
     GRect bounds = layer_get_bounds(window_layer);
@@ -139,6 +175,8 @@ static void window_unload(Window *window) {
     scroll_layer_destroy(s_scroll_layer);
     text_layer_destroy(s_title_layer);
     text_layer_destroy(s_location_layer);
+    text_layer_destroy(s_attendees_layer);
+    text_layer_destroy(s_body_layer);
     gbitmap_destroy(s_locationicon_bitmap);
     bitmap_layer_destroy(s_locationicon_layer);
 }

@@ -67,6 +67,14 @@ void process_eventsmenu_message(DictionaryIterator *received) {
     if(tuple) {
         persist_write_string(PERSIST_EVENT_LOCATION + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
     }
+    tuple = dict_find(received, KEY_EVENT_ATTENDEES);
+    if(tuple) {
+        persist_write_string(PERSIST_EVENT_ATTENDEES + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
+    }
+    tuple = dict_find(received, KEY_EVENT_BODY);
+    if(tuple) {
+        persist_write_string(PERSIST_EVENT_BODY + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
+    }
     tuple = dict_find(received, KEY_REFRESH_UI);
     if(tuple) {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Refreshing events menu");

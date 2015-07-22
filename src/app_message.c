@@ -3,6 +3,7 @@
 #include "app_message.h"
 #include "ui_eventsmenu.h"
 #include "ui_replymenu.h"
+#include "ui_messagebox.h"
 #include "client_secret.h"
 
 void send_client_secret(void){
@@ -18,11 +19,6 @@ void send_client_secret(void){
  
 }
 
-enum {
-    TEXT_FIRST_RUN = 1
-};
-
-
 static void in_received_handler(DictionaryIterator *received, void *context) {
     
     Tuple *tuple;
@@ -30,6 +26,11 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
     tuple = dict_find(received, KEY_INIT);
     if(tuple) {
         send_client_secret();
+    }
+
+    tuple = dict_find(received, KEY_SHOW_ERROR);
+    if(tuple) {
+        ui_messagebox_show("Error", tuple->value->cstring);
     }
 
     process_eventsmenu_message(received);

@@ -4,6 +4,7 @@ enum {
     KEY_INIT = 0,
     KEY_CLIENT_SECRET = 1,
     KEY_REFRESH_TOKEN = 2,
+    KEY_SHOW_ERROR = 3,
     KEY_BUFFER_SIZE = 4,
     KEY_SEND_REPLY = 5,
     KEY_MINUTES_LATE = 6,
@@ -16,6 +17,8 @@ enum {
     KEY_EVENT_START_DATE = 12,
     KEY_EVENT_END_DATE = 13,
     KEY_EVENT_LOCATION = 14,
+    KEY_EVENT_ATTENDEES = 15,
+    KEY_EVENT_BODY = 16,
 };
 
 void app_message_init();
