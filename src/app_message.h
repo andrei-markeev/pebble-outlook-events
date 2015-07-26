@@ -19,6 +19,9 @@ enum {
     KEY_EVENT_LOCATION = 14,
     KEY_EVENT_ATTENDEES = 15,
     KEY_EVENT_BODY = 16,
+    
+    KEY_ENABLE_REMINDERS = 20,
+    KEY_SYNC_INTERVAL = 21
 };
 
 void app_message_init();

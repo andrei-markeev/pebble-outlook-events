@@ -1,9 +1,14 @@
+var ready = false;
 Pebble.addEventListener("ready", function(e) {
+    if (ready)
+        return;
+    ready = true;
     console.log('js ready');
+    var has_code = 0;
     if (localStorage.getItem('code'))
-        Pebble.sendAppMessage({ init: 1 });
-    else
-        Pebble.sendAppMessage({ init: 0 });
+        has_code = 1;
+    
+    Pebble.sendAppMessage({ init: has_code }, function() {}, silentErrorCallback);
 });
 
 
@@ -16,11 +21,21 @@ Pebble.addEventListener("webviewclosed", function(e) {
 
     var settings = JSON.parse(decodeURIComponent(e.response));
     console.log("Settings response: " + JSON.stringify(settings));
-    localStorage.setItem('code', settings.code);
+    
+    if (settings.code) {
+        localStorage.setItem('code', settings.code);
+        localStorage.removeItem('refresh_token');
+    }
+    
     localStorage.setItem('message', settings.message);
-    localStorage.removeItem('refresh_token');
-    sendAppMessageSafely({show_loading: 1});
-    getEvents();
+    
+    if (localStorage.getItem('code') || localStorage.getItem('refresh_token')) {
+    
+        sendAppMessageSafely({ show_loading: 1, enable_reminders: parseInt(settings.enable_reminders), sync_interval: parseInt(settings.sync_interval) }, function() {
+            getEvents();
+        }, silentErrorCallback);
+        
+    }
 
 });
 
@@ -31,6 +46,7 @@ Pebble.addEventListener("appmessage", function(e) {
     if ('client_secret' in e.payload) {
         localStorage.setItem('clientSecret', e.payload.client_secret);
         localStorage.setItem('bufferSize', e.payload.buffer_size);
+        
         if (localStorage.getItem('code'))
             getEvents();
     }

@@ -5,6 +5,7 @@
 #include "ui_replymenu.h"
 #include "ui_messagebox.h"
 #include "client_secret.h"
+#include "wakeup.h"
 
 void send_client_secret(void){
     DictionaryIterator *iter;
@@ -34,6 +35,7 @@ static void in_received_handler(DictionaryIterator *received, void *context) {
     }
 
     process_eventsmenu_message(received);
+    process_wakeup_message(received);
     process_replymenu_message(received);
 }
 

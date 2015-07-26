@@ -1,9 +1,13 @@
 #include <pebble.h>
 #include "app_message.h"
 #include "event.h"
+#include "wakeup.h"
 #include "date_format.h"
 #include "ui_eventsmenu.h"
 #include "ui_eventdetails.h"
+#include "ui_messagebox.h"
+
+#define APP_VERSION 22
 
 static Window *s_menu_window = NULL;
 static TextLayer *s_title_layer = NULL;
@@ -38,6 +42,21 @@ void process_eventsmenu_message(DictionaryIterator *received) {
     tuple = dict_find(received, KEY_INIT);
     if(tuple && tuple->value->int8 == 0) {
         eventsmenu_firstload();
+    } else {
+        
+        if (!persist_exists(PERSIST_KEY_VERSION)) {
+
+            if(persist_exists(PERSIST_EVENT_TITLE))  
+                persist_write_int(PERSIST_KEY_VERSION, 21);
+            else
+                persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
+                  
+        } 
+        
+        if (persist_read_int(PERSIST_KEY_VERSION) < APP_VERSION) {
+            ui_messagebox_show("What's new", "Version 2.2: Added event reminders. To enable, visit app settings on phone.");
+            persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
+        }
     }
     
     tuple = dict_find(received, KEY_SHOW_LOADING);
@@ -80,6 +99,7 @@ void process_eventsmenu_message(DictionaryIterator *received) {
         APP_LOG(APP_LOG_LEVEL_DEBUG, "Refreshing events menu");
         menu_layer_reload_data(s_menu_layer);
         text_layer_set_text(s_title_layer, "Events (online)");
+        wakeup_schedule_event_reminder();
         
         if (layer_get_hidden(menu_layer_get_layer(s_menu_layer))) {
             layer_set_hidden(text_layer_get_layer(s_message_layer), true);
