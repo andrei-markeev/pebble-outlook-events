@@ -1,20 +1,34 @@
 var ready = false;
 Pebble.addEventListener("ready", function(e) {
+    console.log('ready fires');
     if (ready)
         return;
     ready = true;
-    console.log('js ready');
     var has_code = 0;
     if (localStorage.getItem('code'))
         has_code = 1;
     
+    console.log('sending Init message');
     Pebble.sendAppMessage({ init: has_code }, function() {}, silentErrorCallback);
 });
 
 
 Pebble.addEventListener("showConfiguration", function(e) {
     console.log("Configuration opened");
-    Pebble.openURL('http://markeev.com/pebble/events365.html');
+    var params = "";
+    if (localStorage.getItem('code'))
+        params += "&hasCode=1";
+    if (localStorage.getItem('enable_reminders'))
+        params += "&enable_reminders=" + localStorage.getItem('enable_reminders');
+    if (localStorage.getItem('sync_interval'))
+        params += "&sync_interval=" + localStorage.getItem('sync_interval');
+    if (localStorage.getItem('message'))
+        params += "&message=" + encodeURIComponent(localStorage.getItem('message'));
+    
+    if (params[0] == "&")
+        params = params.substring(1);
+    console.log('params:' + params);
+    Pebble.openURL('http://markeev.com/pebble/events365.html?' + params);
 });
 
 Pebble.addEventListener("webviewclosed", function(e) {
@@ -28,6 +42,8 @@ Pebble.addEventListener("webviewclosed", function(e) {
     }
     
     localStorage.setItem('message', settings.message);
+    localStorage.setItem('enable_reminders', parseInt(settings.enable_reminders));
+    localStorage.setItem('sync_interval', parseInt(settings.sync_interval));
     
     if (localStorage.getItem('code') || localStorage.getItem('refresh_token')) {
     
@@ -41,8 +57,6 @@ Pebble.addEventListener("webviewclosed", function(e) {
 
 
 Pebble.addEventListener("appmessage", function(e) {
-    console.log('App message received:' + JSON.stringify(e.payload));
-
     if ('client_secret' in e.payload) {
         localStorage.setItem('clientSecret', e.payload.client_secret);
         localStorage.setItem('bufferSize', e.payload.buffer_size);
@@ -146,11 +160,13 @@ function sendReply(eventNo, minutes)
 
 function silentErrorCallback(err)
 {
+    console.log('silentErrorCallback');
     console.log('error occured: ' + JSON.stringify(err));
 }
 
 function loudErrorCallback(error)
 {
+    console.log('loudErrorCallback');
     console.log('error occured: ' + JSON.stringify(error));
     if (error && typeof error == 'string')
       error = JSON.parse(error);
@@ -168,6 +184,19 @@ function loudErrorCallback(error)
     
 }
 
+function toByteArray(s, maxLength) {
+    
+    var utf8String = unescape(encodeURIComponent(s));
+    
+    var arr = [];
+    for (var i = 0; i < utf8String.length && i < maxLength - 1; i++) {
+        arr.push(utf8String.charCodeAt(i));
+    }
+    arr.push(0);
+    
+    return arr;
+}
+
 function getDataSize(n, size)
 {
     return 1 + (n * 7) + size;
@@ -179,34 +208,29 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
     var keysCount = 0;
     var totalLength = 0;
     var dataSize = 0;
+    var maxSize = bufferSize - getDataSize(1, 1);
     var toSend = {};
     var sendRecursively = function (dataToSend)
     {
-        return function() { sendAppMessageSafely(dataToSend, successCallback, errorCallback); };
+        return function() { console.log('callback'); sendAppMessageSafely(dataToSend, successCallback, errorCallback); };
     };
     for (var k in data) {
 
         if (data[k] === null)
             continue;
         
-        if (typeof data[k] == "string")
+        if (typeof data[k] == "string") {
+            data[k] = toByteArray(data[k], maxSize);
             totalLength += data[k].length;
+        }
         else
             totalLength += 4;
         
         keysCount++;
-        
         dataSize = getDataSize(keysCount, totalLength);
-        if (bufferSize < dataSize) {
+        if (bufferSize <= dataSize) {
             
-            if (keysCount === 1) {
-                var metadataSize = dataSize - data[k].length;
-                var maxLength = bufferSize - metadataSize;
-                var valueToSend = data[k].substr(0, maxLength - 4) + '...';
-                
-                toSend[k] = valueToSend;
-                data[k] = null;
-            }
+            console.log('send-portion');
             Pebble.sendAppMessage(toSend, sendRecursively(data), errorCallback);
             return;
             

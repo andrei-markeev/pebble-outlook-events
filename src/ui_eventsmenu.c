@@ -7,7 +7,7 @@
 #include "ui_eventdetails.h"
 #include "ui_messagebox.h"
 
-#define APP_VERSION 22
+#define APP_VERSION 24
 
 static Window *s_menu_window = NULL;
 static TextLayer *s_title_layer = NULL;
@@ -51,10 +51,12 @@ void process_eventsmenu_message(DictionaryIterator *received) {
             else
                 persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
                   
-        } 
+        }
         
-        if (persist_read_int(PERSIST_KEY_VERSION) < APP_VERSION) {
+        if (persist_read_int(PERSIST_KEY_VERSION) < 22) {
             ui_messagebox_show("What's new", "Version 2.2: Added event reminders. To enable, visit app settings on phone.");
+        }
+        if (persist_read_int(PERSIST_KEY_VERSION) < APP_VERSION) {
             persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
         }
     }
@@ -72,7 +74,7 @@ void process_eventsmenu_message(DictionaryIterator *received) {
     }
     tuple = dict_find(received, KEY_EVENT_TITLE);
     if(tuple) {
-        persist_write_string(PERSIST_EVENT_TITLE + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
+        persist_write_string(PERSIST_EVENT_TITLE + current_event_id*PERSIST_EVENT_FIELDCOUNT, (char *)tuple->value->data);
     }
     tuple = dict_find(received, KEY_EVENT_START_DATE);
     if(tuple) {
@@ -84,15 +86,15 @@ void process_eventsmenu_message(DictionaryIterator *received) {
     }
     tuple = dict_find(received, KEY_EVENT_LOCATION);
     if(tuple) {
-        persist_write_string(PERSIST_EVENT_LOCATION + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
+        persist_write_string(PERSIST_EVENT_LOCATION + current_event_id*PERSIST_EVENT_FIELDCOUNT, (char *)tuple->value->data);
     }
     tuple = dict_find(received, KEY_EVENT_ATTENDEES);
     if(tuple) {
-        persist_write_string(PERSIST_EVENT_ATTENDEES + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
+        persist_write_string(PERSIST_EVENT_ATTENDEES + current_event_id*PERSIST_EVENT_FIELDCOUNT, (char *)tuple->value->data);
     }
     tuple = dict_find(received, KEY_EVENT_BODY);
     if(tuple) {
-        persist_write_string(PERSIST_EVENT_BODY + current_event_id*PERSIST_EVENT_FIELDCOUNT, tuple->value->cstring);
+        persist_write_string(PERSIST_EVENT_BODY + current_event_id*PERSIST_EVENT_FIELDCOUNT, (char *)tuple->value->data);
     }
     tuple = dict_find(received, KEY_REFRESH_UI);
     if(tuple) {

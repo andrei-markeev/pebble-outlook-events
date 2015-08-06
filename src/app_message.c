@@ -13,7 +13,7 @@ void send_client_secret(void){
     app_message_outbox_begin(&iter);
     Tuplet tuplet1 = TupletCString(KEY_CLIENT_SECRET, CLIENT_SECRET);
     dict_write_tuplet(iter, &tuplet1);
-    Tuplet tuplet2 = TupletInteger(KEY_BUFFER_SIZE, APP_MESSAGE_INBOX_SIZE_MINIMUM);
+    Tuplet tuplet2 = TupletInteger(KEY_BUFFER_SIZE, app_message_inbox_size_maximum());
     dict_write_tuplet(iter, &tuplet2);
     dict_write_end(iter);
     app_message_outbox_send();
@@ -77,7 +77,7 @@ void app_message_init()
     app_message_register_inbox_dropped(in_dropped_handler); 
     app_message_register_outbox_failed(out_failed_handler);
 
-    app_message_open(APP_MESSAGE_INBOX_SIZE_MINIMUM, APP_MESSAGE_OUTBOX_SIZE_MINIMUM);
+    app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 }
 
 void app_message_deinit()
