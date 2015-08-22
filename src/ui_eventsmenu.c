@@ -7,7 +7,7 @@
 #include "ui_eventdetails.h"
 #include "ui_messagebox.h"
 
-#define APP_VERSION 24
+#define APP_VERSION 25
 
 static Window *s_menu_window = NULL;
 static TextLayer *s_title_layer = NULL;
@@ -18,6 +18,14 @@ static int current_event_id = 0;
 
 void eventsmenu_set_offline_mode() {
     text_layer_set_text(s_title_layer, "Events (offline)");
+}
+
+void eventsmenu_sync() {
+    text_layer_set_text(s_title_layer, "Events");
+    text_layer_set_text(s_message_layer, "\nRefreshing...");
+    text_layer_set_text_alignment(s_message_layer, GTextAlignmentCenter);
+    layer_set_hidden(text_layer_get_layer(s_message_layer), false);
+    layer_set_hidden(menu_layer_get_layer(s_menu_layer), true);
 }
 
 static void eventsmenu_firstload() {
@@ -40,25 +48,32 @@ void process_eventsmenu_message(DictionaryIterator *received) {
     Tuple *tuple;
 
     tuple = dict_find(received, KEY_INIT);
-    if(tuple && tuple->value->int8 == 0) {
-        eventsmenu_firstload();
-    } else {
+    if (tuple) {
+        if (tuple->value->int8 == 0) {
+            eventsmenu_firstload();
+        } else {
         
-        if (!persist_exists(PERSIST_KEY_VERSION)) {
-
-            if(persist_exists(PERSIST_EVENT_TITLE))  
-                persist_write_int(PERSIST_KEY_VERSION, 21);
-            else
+            if (!persist_exists(PERSIST_KEY_VERSION)) {
+    
+                if(persist_exists(PERSIST_EVENT_TITLE))  
+                    persist_write_int(PERSIST_KEY_VERSION, 21);
+                else
+                    persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
+                      
+            }
+            
+            if (persist_read_int(PERSIST_KEY_VERSION) < 22) {
+                ui_messagebox_show("What's new", "Version 2.2: Added event reminders. To enable, visit app settings on phone.");
+            }
+            if (persist_read_int(PERSIST_KEY_VERSION) < 25) {
+                ui_messagebox_show("What's new", "Version 2.5: Added auto refresh. To enable, visit app settings on phone.");
+            }
+            if (persist_read_int(PERSIST_KEY_VERSION) < APP_VERSION) {
                 persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
-                  
+            }
         }
-        
-        if (persist_read_int(PERSIST_KEY_VERSION) < 22) {
-            ui_messagebox_show("What's new", "Version 2.2: Added event reminders. To enable, visit app settings on phone.");
-        }
-        if (persist_read_int(PERSIST_KEY_VERSION) < APP_VERSION) {
-            persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);
-        }
+        send_client_secret();
+        wakeup_schedule_sync();
     }
     
     tuple = dict_find(received, KEY_SHOW_LOADING);

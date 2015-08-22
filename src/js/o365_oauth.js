@@ -2,11 +2,10 @@
 
 var o365_oauth = {};
 
-o365_oauth.login = function(successCallback, errorCallback)
+o365_oauth.login = function(clientSecret, successCallback, errorCallback)
 {
 
   var clientId = '93a56d1e-c5fc-4f8e-9992-047ed203455e';
-  var clientSecret = (localStorage.getItem('clientSecret') || "").replace(/ /g,'+');
   var code = (localStorage.getItem('code') || "").replace(/ /g,'+');
   
   function authCodeRequestCallback(data, status, request) {

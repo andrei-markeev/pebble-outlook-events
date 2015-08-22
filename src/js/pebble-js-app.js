@@ -1,4 +1,7 @@
 var ready = false;
+var loadingEvents = false;
+var clientCode = '';
+
 Pebble.addEventListener("ready", function(e) {
     console.log('ready fires');
     if (ready)
@@ -43,11 +46,14 @@ Pebble.addEventListener("webviewclosed", function(e) {
     
     localStorage.setItem('message', settings.message);
     localStorage.setItem('enable_reminders', parseInt(settings.enable_reminders));
-    localStorage.setItem('sync_interval', parseInt(settings.sync_interval));
+    var sync_interval = parseInt(settings.sync_interval);
+    if (sync_interval < 0)
+        sync_interval = 0;
+    localStorage.setItem('sync_interval', sync_interval);
     
     if (localStorage.getItem('code') || localStorage.getItem('refresh_token')) {
     
-        sendAppMessageSafely({ show_loading: 1, enable_reminders: parseInt(settings.enable_reminders), sync_interval: parseInt(settings.sync_interval) }, function() {
+        enqueueMessage({ show_loading: 1, enable_reminders: parseInt(settings.enable_reminders), sync_interval: sync_interval }, function() {
             getEvents();
         }, silentErrorCallback);
         
@@ -57,8 +63,8 @@ Pebble.addEventListener("webviewclosed", function(e) {
 
 
 Pebble.addEventListener("appmessage", function(e) {
-    if ('client_secret' in e.payload) {
-        localStorage.setItem('clientSecret', e.payload.client_secret);
+    if ('fetch_events' in e.payload) {
+        clientCode = e.payload.fetch_events;
         localStorage.setItem('bufferSize', e.payload.buffer_size);
         
         if (localStorage.getItem('code'))
@@ -75,7 +81,15 @@ var connector;
 
 function getEvents()
 {
-    o365_oauth.login(function(access_token) {
+    if (loadingEvents)
+    {
+        setTimeout(getEvents, 500);
+        return;
+    }
+    
+    loadingEvents = true;
+    
+    o365_oauth.login(clientCode, function(access_token) {
         connector = new o365_api(access_token);
 
         connector.getNextTenEvents(function(events) {
@@ -86,7 +100,8 @@ function getEvents()
                 if (i == events.length)
                 {
                     console.log("All events are saved to the phone. Sending the Refresh UI message...");
-                    sendAppMessageSafely({refresh_ui: 1});
+                    enqueueMessage({refresh_ui: 1});
+                    loadingEvents = false;
                     return;
                 }
 
@@ -108,7 +123,7 @@ function getEvents()
                 if (getWatchInfo().platform == "basalt")
                     timeZoneOffset = 0;
                 
-                sendAppMessageSafely({
+                enqueueMessage({
                     event_id: i,
                     event_title: events[i].Subject,
                     event_start_date: parseInt(new Date(events[i].Start).getTime()/1000) - timeZoneOffset,
@@ -152,7 +167,7 @@ function sendReply(eventNo, minutes)
         recipients,
         function(data, status, response) {
             console.log('reply sent: ' + data);
-            sendAppMessageSafely({ reply_sent: message });
+            enqueueMessage({ reply_sent: message });
         },
         loudErrorCallback
     );
@@ -162,12 +177,17 @@ function silentErrorCallback(err)
 {
     console.log('silentErrorCallback');
     console.log('error occured: ' + JSON.stringify(err));
+
+    loadingEvents = false;
+    enqueueMessage({ silent_error: 1 });
 }
 
 function loudErrorCallback(error)
 {
     console.log('loudErrorCallback');
     console.log('error occured: ' + JSON.stringify(error));
+
+    loadingEvents = false;
     if (error && typeof error == 'string')
       error = JSON.parse(error);
     var message = "";
@@ -180,7 +200,7 @@ function loudErrorCallback(error)
     else
       message = 'Unknown error occured!';
     
-    sendAppMessageSafely({show_error: message });
+    enqueueMessage({show_error: message });
     
 }
 
@@ -200,6 +220,35 @@ function toByteArray(s, maxLength) {
 function getDataSize(n, size)
 {
     return 1 + (n * 7) + size;
+}
+
+var messageQueue = [];
+
+function enqueueMessage(data, successCallback, errorCallback) {
+    if (!successCallback)
+        successCallback = function() { };
+    if (!errorCallback)
+        errorCallback = silentErrorCallback;
+
+    messageQueue.push({ data:data, successCallback: successCallback, errorCallback: errorCallback });
+    processMessages();
+}
+
+var sending = false;
+function processMessages() {
+    if (messageQueue.length > 0 && !sending) {
+        sending = true;
+        var messageData = messageQueue.shift();
+        sendAppMessageSafely(messageData.data, function() {
+            sending = false;
+            messageData.successCallback.apply(null, arguments);
+            processMessages();
+        }, function () {
+            sending = false;
+            messageData.errorCallback.apply(null, arguments);
+            processMessages();
+        });
+    }
 }
 
 function sendAppMessageSafely(data, successCallback, errorCallback) {

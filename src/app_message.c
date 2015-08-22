@@ -11,7 +11,7 @@ void send_client_secret(void){
     DictionaryIterator *iter;
 
     app_message_outbox_begin(&iter);
-    Tuplet tuplet1 = TupletCString(KEY_CLIENT_SECRET, CLIENT_SECRET);
+    Tuplet tuplet1 = TupletCString(KEY_FETCH_EVENTS, CLIENT_SECRET);
     dict_write_tuplet(iter, &tuplet1);
     Tuplet tuplet2 = TupletInteger(KEY_BUFFER_SIZE, app_message_inbox_size_maximum());
     dict_write_tuplet(iter, &tuplet2);
@@ -23,11 +23,6 @@ void send_client_secret(void){
 static void in_received_handler(DictionaryIterator *received, void *context) {
     
     Tuple *tuple;
-
-    tuple = dict_find(received, KEY_INIT);
-    if(tuple) {
-        send_client_secret();
-    }
 
     tuple = dict_find(received, KEY_SHOW_ERROR);
     if(tuple) {
@@ -65,8 +60,10 @@ static void in_dropped_handler(AppMessageResult reason, void *context) {
 }
 
 static void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-    if (reason == APP_MSG_NOT_CONNECTED)
+    if (reason == APP_MSG_NOT_CONNECTED) {
         eventsmenu_set_offline_mode();
+        wakeup_auto_close();
+    }
     APP_LOG(APP_LOG_LEVEL_DEBUG, "App Message Failed to Send! Reason: %s", get_reason_string(reason));
 }
 

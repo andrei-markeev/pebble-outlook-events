@@ -2,7 +2,7 @@
 
 enum {
     KEY_INIT = 0,
-    KEY_CLIENT_SECRET = 1,
+    KEY_FETCH_EVENTS = 1,
     KEY_REFRESH_TOKEN = 2,
     KEY_SHOW_ERROR = 3,
     KEY_BUFFER_SIZE = 4,
@@ -21,8 +21,12 @@ enum {
     KEY_EVENT_BODY = 16,
     
     KEY_ENABLE_REMINDERS = 20,
-    KEY_SYNC_INTERVAL = 21
+    KEY_SYNC_INTERVAL = 21,
+    
+    KEY_SILENT_ERROR = 22
 };
+
+void send_client_secret();
 
 void app_message_init();
 void app_message_deinit();
