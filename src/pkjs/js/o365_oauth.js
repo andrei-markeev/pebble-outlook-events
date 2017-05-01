@@ -27,7 +27,7 @@ o365_oauth.login = function(clientSecret, successCallback, errorCallback)
         data: {
           grant_type: 'refresh_token',
           refresh_token: localStorage.getItem('refresh_token') || "",
-          redirect_uri: 'http://markeev.com/pebble/events365.html',
+          redirect_uri: 'https://markeev.com/pebble/events365.html',
           client_id: clientId,
           client_secret: clientSecret
         }
@@ -46,7 +46,7 @@ o365_oauth.login = function(clientSecret, successCallback, errorCallback)
           data: {
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: 'http://markeev.com/pebble/events365.html',
+            redirect_uri: 'https://markeev.com/pebble/events365.html',
             client_id: clientId,
             client_secret: clientSecret
           }
