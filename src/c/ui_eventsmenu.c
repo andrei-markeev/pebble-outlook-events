@@ -172,6 +172,7 @@ static int get_event_no_from_row_index(int index) {
     return i - 1;
 }
 
+char event_title[PERSIST_STRING_MAX_LENGTH];
 static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex *cell_index, void *callback_context) {
 
     int event_no = get_event_no_from_row_index(cell_index->row);
@@ -179,7 +180,6 @@ static void draw_row_callback(GContext *ctx, const Layer *cell_layer, MenuIndex 
     if (!persist_exists(event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_TITLE))
         return;
     
-    char event_title[PERSIST_STRING_MAX_LENGTH];
     persist_read_string(event_no * PERSIST_EVENT_FIELDCOUNT + PERSIST_EVENT_TITLE, event_title, PERSIST_STRING_MAX_LENGTH);
     
     char event_subtitle[55];

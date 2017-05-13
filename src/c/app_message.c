@@ -74,7 +74,13 @@ void app_message_init()
     app_message_register_inbox_dropped(in_dropped_handler); 
     app_message_register_outbox_failed(out_failed_handler);
 
-    app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+    int32_t inbox_size = app_message_inbox_size_maximum();
+    if (inbox_size > 1024)
+        inbox_size = 1024;
+    int32_t outbox_size = app_message_outbox_size_maximum();
+    if (outbox_size > 1024)
+        outbox_size = 1024;
+    app_message_open(inbox_size, outbox_size);
 }
 
 void app_message_deinit()

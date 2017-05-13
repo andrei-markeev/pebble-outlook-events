@@ -132,7 +132,7 @@ function getEvents()
                     event_body: events[i].BodyPreview,
                     event_attendees: attendeesList.join(", ") + (n > 0 ? ", and " + n + " others." : "")
                 }, function() {
-                    console.log("Event " + i + " saved to the phone.");
+                    console.log("Event " + i + " '" + events[i].Subject + "' saved to the phone.");
                     i++;
                     saveEvents(i);
                 }, silentErrorCallback);
@@ -179,7 +179,7 @@ function silentErrorCallback(err)
     console.log('error occured: ' + JSON.stringify(err));
 
     loadingEvents = false;
-    enqueueMessage({ silent_error: 1 });
+    enqueueMessage({ silent_error: 1 }, function() { }, function() { });
 }
 
 function loudErrorCallback(error)
