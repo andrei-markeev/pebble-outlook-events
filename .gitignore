@@ -1,1 +1,3 @@
-/src/client_secret.h
+src/c/client_secret.h
+.pebble
+cloudpebble-portable.com

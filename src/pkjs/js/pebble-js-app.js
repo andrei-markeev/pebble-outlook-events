@@ -106,17 +106,19 @@ function getEvents()
                 }
 
                 var attendeesList = [];
+                var attendeesNameList = [];
                 var attendeesEmailList = [];
                 var n = 0;
-                for (var a=0;a<events[i].Attendees.length;a++)
+                for (var a=0;a<events[i].attendees.length;a++)
                 {
-                    if (events[i].Attendees[a].Type=='Resource')
+                    if (events[i].attendees[a].Type=='Resource')
                         continue;
-                    if (a <= 2 || events[i].Attendees.length == 4)
-                        attendeesList.push(events[i].Attendees[a].EmailAddress.Name);
+                    if (a <= 2 || events[i].attendees.length == 4)
+                        attendeesList.push(events[i].attendees[a].emailAddress.name);
                     else
                         n++;
-                    attendeesEmailList.push(events[i].Attendees[a].EmailAddress.Address);
+                    attendeesNameList.push(events[i].attendees[a].emailAddress.name);
+                    attendeesEmailList.push(events[i].attendees[a].emailAddress.address);
                 }
                 
                 var timeZoneOffset = new Date().getTimezoneOffset() * 60;
@@ -125,20 +127,20 @@ function getEvents()
                 
                 enqueueMessage({
                     event_id: i,
-                    event_title: events[i].Subject,
-                    event_start_date: parseInt(new Date(events[i].Start).getTime()/1000) - timeZoneOffset,
-                    event_end_date: parseInt(new Date(events[i].End).getTime()/1000) - timeZoneOffset,
-                    event_location: events[i].Location.DisplayName,
-                    event_body: events[i].BodyPreview,
+                    event_title: events[i].subject,
+                    event_start_date: parseInt(new Date(events[i].start.dateTime).getTime()/1000) - timeZoneOffset,
+                    event_end_date: parseInt(new Date(events[i].end.dateTime).getTime()/1000) - timeZoneOffset,
+                    event_location: events[i].location.displayName,
+                    event_body: events[i].bodyPreview,
                     event_attendees: attendeesList.join(", ") + (n > 0 ? ", and " + n + " others." : "")
                 }, function() {
-                    console.log("Event " + i + " '" + events[i].Subject + "' saved to the phone.");
+                    console.log("Event " + i + " '" + events[i].subject + "' saved to the phone.");
                     i++;
                     saveEvents(i);
                 }, silentErrorCallback);
 
-                localStorage.setItem("event" + i + "Subject", events[i].Subject);
-                localStorage.setItem("event" + i + "Attendees", attendeesList.join(", "));
+                localStorage.setItem("event" + i + "Subject", events[i].subject);
+                localStorage.setItem("event" + i + "Attendees", attendeesNameList.join(", "));
                 localStorage.setItem("event" + i + "AttendeeEmails", attendeesEmailList.join(";"));
                     
             }
@@ -159,7 +161,7 @@ function sendReply(eventNo, minutes)
     var attendeeEmails = localStorage.getItem("event" + eventNo + "AttendeeEmails").split(';');
     var recipients = [];
     for (var i=0;i<attendeeEmails.length;i++)
-        recipients.push({ EmailAddress: { Address: attendeeEmails[i], Name: attendeeNames[i] }});
+        recipients.push({ emailAddress: { address: attendeeEmails[i], name: attendeeNames[i] }});
 
     connector.sendMail(
         localStorage.getItem("event" + eventNo + "Subject"),

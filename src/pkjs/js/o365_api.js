@@ -2,10 +2,14 @@ var o365_api = function(access_token) {
 
   this.getNextTenEvents = function(successCallback, errorCallback)
   {
+      var now = new Date().toISOString();
+      var inOneYear = new Date();
+      inOneYear.setFullYear(inOneYear.getFullYear()+1);
+      inOneYear = inOneYear.toISOString();
   
       ajax(
         {
-          url: 'https://outlook.office365.com/api/v1.0/me/calendarview?startdatetime='+new Date(Date.now()).toISOString()+'&enddatetime=3015-10-11T01:00:00Z&$top=10&$select=Subject,Start,IsAllDay,End,Location,Attendees,Organizer,BodyPreview,ResponseStatus',
+          url: 'https://graph.microsoft.com/v1.0/me/calendarView?startDateTime='+now+'&endDateTime='+inOneYear+'&$top=10&$select=Subject,Start,IsAllDay,End,Location,Attendees,Organizer,BodyPreview,ResponseStatus',
           headers: { 
             "Authorization": "Bearer " + access_token
           }
@@ -25,22 +29,22 @@ var o365_api = function(access_token) {
   
       ajax(
         {
-          url: 'https://outlook.office365.com/api/v1.0/me/sendmail',
+          url: 'https://graph.microsoft.com/v1.0/me/sendMail',
           headers: { 
             "Authorization": "Bearer " + access_token
           },
           method: 'POST',
           type: 'json',
           data: {
-            "Message": {
-              "Subject": subject,
-              "Body": {
-                "ContentType": "Text",
-                "Content": message
+            "message": {
+              "subject": subject,
+              "body": {
+                "contentType": "Text",
+                "content": message
               },
-              "ToRecipients": recipients
+              "toRecipients": recipients
             },
-            "SaveToSentItems": "true"
+            "saveToSentItems": "true"
           }
         },
         successCallback,
