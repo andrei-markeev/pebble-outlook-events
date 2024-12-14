@@ -3,7 +3,7 @@ var loadingEvents = false;
 var clientCode = '';
 
 Pebble.addEventListener("ready", function(e) {
-    console.log('ready fires');
+    console.log('ready fires 25');
     if (ready)
         return;
     ready = true;
@@ -27,6 +27,8 @@ Pebble.addEventListener("showConfiguration", function(e) {
         params += "&sync_interval=" + localStorage.getItem('sync_interval');
     if (localStorage.getItem('message'))
         params += "&message=" + encodeURIComponent(localStorage.getItem('message'));
+    if (localStorage.getItem('enable_timeline'))
+        params += "&enable_timeline=" + localStorage.getItem('enable_timeline');
     
     if (params[0] == "&")
         params = params.substring(1);
@@ -50,6 +52,7 @@ Pebble.addEventListener("webviewclosed", function(e) {
     if (sync_interval < 0)
         sync_interval = 0;
     localStorage.setItem('sync_interval', sync_interval);
+    localStorage.setItem('enable_timeline', parseInt(settings.enable_timeline));
     
     if (localStorage.getItem('code') || localStorage.getItem('refresh_token')) {
     
@@ -94,6 +97,7 @@ function getEvents()
 
         connector.getNextTenEvents(function(events) {
 
+            var timelineEnabled = localStorage.getItem('enable_timeline') == 1;
             function saveEvents(i) {
                 if (!i)
                     i = 0;
@@ -120,20 +124,46 @@ function getEvents()
                     attendeesNameList.push(events[i].attendees[a].emailAddress.name);
                     attendeesEmailList.push(events[i].attendees[a].emailAddress.address);
                 }
-                
+
                 var timeZoneOffset = new Date().getTimezoneOffset() * 60;
                 if (getWatchInfo().platform == "basalt")
                     timeZoneOffset = 0;
-                
-                enqueueMessage({
+
+                var startAsDate = new Date(events[i].start.dateTime);
+                var endAsDate = new Date(events[i].end.dateTime);
+
+                var startTS = parseInt(startAsDate.getTime()/1000) - timeZoneOffset;
+                var endTS = parseInt(endAsDate.getTime()/1000) - timeZoneOffset;
+
+                var eventData = {
                     event_id: i,
                     event_title: events[i].subject,
-                    event_start_date: parseInt(new Date(events[i].start.dateTime).getTime()/1000) - timeZoneOffset,
-                    event_end_date: parseInt(new Date(events[i].end.dateTime).getTime()/1000) - timeZoneOffset,
+                    event_start_date: startTS,
+                    event_end_date: endTS,
                     event_location: events[i].location.displayName,
                     event_body: events[i].bodyPreview,
                     event_attendees: attendeesList.join(", ") + (n > 0 ? ", and " + n + " others." : "")
-                }, function() {
+                };
+
+                if (timelineEnabled) {
+                    var pin = {
+                        id: "event-" + startTS + '-' + checksum(events[i].id),
+                        time: startAsDate.toISOString(),
+                        duration: Math.floor((endTS - startTS)/60),
+                        layout: {
+                            title: events[i].subject,
+                            type: "genericPin",
+                            tinyIcon: "system://images/SCHEDULED_EVENT"
+                        }
+                    };
+
+                    console.log('Pin:', JSON.stringify(pin));
+                    timeline_utils.addPin(pin, function() {
+                        console.log("Pin added: " + i + " at " + pin.time);
+                    }, silentErrorCallback);
+                }
+    
+                enqueueMessage(eventData, function() {
                     console.log("Event " + i + " '" + events[i].subject + "' saved to the phone.");
                     i++;
                     saveEvents(i);
@@ -151,6 +181,17 @@ function getEvents()
 
     }, silentErrorCallback);
 
+}
+
+function checksum(s)
+{
+    var chk = 0x12345678;
+    var len = s.length;
+    for (var i = 0; i < len; i++) {
+        chk += (s.charCodeAt(i) * (i + 1));
+    }
+
+    return (chk & 0xffffffff).toString(16);
 }
 
 function sendReply(eventNo, minutes)
@@ -254,13 +295,14 @@ function processMessages() {
 }
 
 function sendAppMessageSafely(data, successCallback, errorCallback) {
-    var bufferSize = localStorage.getItem('bufferSize');
+    var bufferSize = localStorage.getItem('bufferSize') || 124;
     
     var keysCount = 0;
     var totalLength = 0;
     var dataSize = 0;
     var maxSize = bufferSize - getDataSize(1, 1);
     var toSend = {};
+    var toSendIsEmpty = true;
     var sendRecursively = function (dataToSend)
     {
         return function() { console.log('callback'); sendAppMessageSafely(dataToSend, successCallback, errorCallback); };
@@ -270,7 +312,7 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
         if (data[k] === null)
             continue;
         
-        if (typeof data[k] == "string") {
+        if (typeof data[k] === "string") {
             data[k] = toByteArray(data[k], maxSize);
             totalLength += data[k].length;
         }
@@ -280,14 +322,20 @@ function sendAppMessageSafely(data, successCallback, errorCallback) {
         keysCount++;
         dataSize = getDataSize(keysCount, totalLength);
         if (bufferSize <= dataSize) {
-            
-            console.log('send-portion');
-            Pebble.sendAppMessage(toSend, sendRecursively(data), errorCallback);
-            return;
-            
+
+            if (toSendIsEmpty) {
+                console.error('Cannot send appmessage because the key does not fit into the buffer size: ', k, dataSize, bufferSize);
+                return;
+            } else {
+                console.log('send-portion');
+                Pebble.sendAppMessage(toSend, sendRecursively(data), errorCallback);
+                return;
+            }
+
         } else {
 
             toSend[k] = data[k];
+            toSendIsEmpty = false;
             data[k] = null;
             
         }

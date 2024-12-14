@@ -7,7 +7,7 @@
 #include "ui_eventdetails.h"
 #include "ui_messagebox.h"
 
-#define APP_VERSION 25
+#define APP_VERSION 30
 
 static Window *s_menu_window = NULL;
 static TextLayer *s_title_layer = NULL;
@@ -30,7 +30,7 @@ void eventsmenu_sync() {
 
 static void eventsmenu_firstload() {
     text_layer_set_text(s_title_layer, "Events");
-    text_layer_set_text(s_message_layer, "Please visit the configuration page and setup events source");
+    text_layer_set_text(s_message_layer, "Please visit the configuration page and set up events source");
     text_layer_set_text_alignment(s_message_layer, GTextAlignmentLeft);
     layer_set_hidden(text_layer_get_layer(s_message_layer), false);
     layer_set_hidden(menu_layer_get_layer(s_menu_layer), true);
@@ -67,6 +67,9 @@ void process_eventsmenu_message(DictionaryIterator *received) {
             }
             if (persist_read_int(PERSIST_KEY_VERSION) < 25) {
                 ui_messagebox_show("What's new", "Version 2.5: Added auto refresh. To enable, visit app settings on phone.");
+            }
+            if (persist_read_int(PERSIST_KEY_VERSION) < 30) {
+                ui_messagebox_show("What's new", "Version 3.0: Added timeline support. To enable, visit app settings on phone.");
             }
             if (persist_read_int(PERSIST_KEY_VERSION) < APP_VERSION) {
                 persist_write_int(PERSIST_KEY_VERSION, APP_VERSION);

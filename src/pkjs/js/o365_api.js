@@ -9,7 +9,7 @@ var o365_api = function(access_token) {
   
       ajax(
         {
-          url: 'https://graph.microsoft.com/v1.0/me/calendarView?startDateTime='+now+'&endDateTime='+inOneYear+'&$top=10&$select=Subject,Start,IsAllDay,End,Location,Attendees,Organizer,BodyPreview,ResponseStatus',
+          url: 'https://graph.microsoft.com/v1.0/me/calendarView?startDateTime='+now+'&endDateTime='+inOneYear+'&$top=10&$select=id,subject,start,isAllDay,end,location,attendees,organizer,bodyPreview,responseStatus',
           headers: { 
             "Authorization": "Bearer " + access_token
           }
